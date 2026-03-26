@@ -9,7 +9,6 @@ import uuid
 import base64
 import requests
 import smtplib
-import threading
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
@@ -39,16 +38,21 @@ supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 GMAIL_SENDER = os.getenv("GMAIL_SENDER")
 GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
-def send_email_async(to_email, subject, message):
+def send_email_sync(to_email, subject, message):
+    """
+    SYNCHRONOUS email sending (no threading) to prevent production deployment issues.
+    Returns (success: bool, error_message: str)
+    """
     if not GMAIL_SENDER or not GMAIL_APP_PASSWORD:
-        print("⚠️ Gmail credentials missing. Skipping email.")
-        return
-        
+        error_msg = "⚠️ Gmail credentials missing in .env file"
+        print(error_msg)
+        return False, error_msg
+
     msg = MIMEMultipart()
     msg['From'] = f"Milestone Escrow <{GMAIL_SENDER}>"
     msg['To'] = to_email
     msg['Subject'] = subject
-    
+
     html = f"""
     <div style="font-family: sans-serif; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; max-width: 500px;">
         <h2 style="color: #0c3875; margin-top: 0;">Milestone Update</h2>
@@ -58,20 +62,35 @@ def send_email_async(to_email, subject, message):
     </div>
     """
     msg.attach(MIMEText(html, 'html'))
-    
+
     try:
-        server = smtplib.SMTP('smtp.gmail.com', 587)
+        print(f"📧 Attempting to send email to {to_email}...")
+        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
+        server.set_debuglevel(0)  # Set to 1 for detailed SMTP logs
         server.starttls()
+        print(f"🔐 Logging into Gmail as {GMAIL_SENDER}...")
         server.login(GMAIL_SENDER, GMAIL_APP_PASSWORD)
+        print(f"📤 Sending message...")
         server.send_message(msg)
         server.quit()
         print(f"✅ EMAIL SUCCESSFULLY SENT TO: {to_email}")
+        return True, "Email sent successfully"
+    except smtplib.SMTPAuthenticationError as e:
+        error_msg = f"❌ Gmail Authentication Failed: {str(e)} - Check GMAIL_APP_PASSWORD in .env"
+        print(error_msg)
+        return False, error_msg
+    except smtplib.SMTPException as e:
+        error_msg = f"❌ SMTP Error: {str(e)}"
+        print(error_msg)
+        return False, error_msg
     except Exception as e:
-        print(f"❌ EMAIL FAILED: {e}")
+        error_msg = f"❌ EMAIL FAILED: {str(e)}"
+        print(error_msg)
+        return False, error_msg
 
 def trigger_email(to_email, subject, message):
-    thread = threading.Thread(target=send_email_async, args=(to_email, subject, message))
-    thread.start()
+    """Wrapper for synchronous email sending"""
+    return send_email_sync(to_email, subject, message)
 
 # ============================================================================
 # REAL INTERSWITCH API ENGINE
@@ -314,5 +333,40 @@ def approve_milestone(contract_id):
         traceback.print_exc() # This forces Python to spit out the exact line of code that failed
         return jsonify({"error": str(e)}), 500
     
+@app.route('/test-email', methods=['POST'])
+def test_email():
+    """Test endpoint to verify Gmail SMTP is working"""
+    data = request.get_json() or {}
+    test_recipient = data.get('email', GMAIL_SENDER)  # Send to self if no email provided
+
+    test_message = """
+    This is a test email from your Milestone Escrow Platform.<br><br>
+    If you're seeing this, your email integration is working correctly! ✅<br><br>
+    <b>Configuration:</b><br>
+    - SMTP Server: smtp.gmail.com:587<br>
+    - Sender: {sender}<br>
+    - Method: Synchronous (Production-safe)
+    """.format(sender=GMAIL_SENDER)
+
+    success, error = send_email_sync(test_recipient, "🧪 Milestone Email Test", test_message)
+
+    if success:
+        return jsonify({
+            "status": "success",
+            "message": f"Test email sent successfully to {test_recipient}",
+            "check": "Check your inbox (and spam folder)"
+        }), 200
+    else:
+        return jsonify({
+            "status": "failed",
+            "error": error,
+            "troubleshooting": [
+                "1. Verify GMAIL_SENDER and GMAIL_APP_PASSWORD in .env",
+                "2. Ensure 2FA is enabled on Gmail account",
+                "3. Generate a new App Password at https://myaccount.google.com/apppasswords",
+                "4. Check if Gmail is blocking sign-in attempts"
+            ]
+        }), 500
+
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
