@@ -8,9 +8,6 @@ import time
 import uuid
 import base64
 import requests
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from dotenv import load_dotenv
 from flask import Flask, render_template, request, jsonify, session, redirect, url_for
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -33,27 +30,22 @@ if not SUPABASE_URL or not SUPABASE_KEY:
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
 
 # ============================================================================
-# EMAIL ENGINE (GMAIL SMTP - BACKGROUND THREADED)
+# EMAIL ENGINE (SENDGRID API - PRODUCTION READY FOR RENDER/HEROKU)
 # ============================================================================
-GMAIL_SENDER = os.getenv("GMAIL_SENDER")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDER_EMAIL = os.getenv("SENDER_EMAIL", "noreply@milestone-escrow.com")
 
 def send_email_sync(to_email, subject, message):
     """
-    SYNCHRONOUS email sending (no threading) to prevent production deployment issues.
+    Send email via SendGrid API (works on Render, Heroku, Vercel)
     Returns (success: bool, error_message: str)
     """
-    if not GMAIL_SENDER or not GMAIL_APP_PASSWORD:
-        error_msg = "⚠️ Gmail credentials missing in .env file"
+    if not SENDGRID_API_KEY:
+        error_msg = "⚠️ SENDGRID_API_KEY missing in .env file"
         print(error_msg)
         return False, error_msg
 
-    msg = MIMEMultipart()
-    msg['From'] = f"Milestone Escrow <{GMAIL_SENDER}>"
-    msg['To'] = to_email
-    msg['Subject'] = subject
-
-    html = f"""
+    html_content = f"""
     <div style="font-family: sans-serif; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; max-width: 500px;">
         <h2 style="color: #0c3875; margin-top: 0;">Milestone Update</h2>
         <p style="color: #334155; font-size: 16px; line-height: 1.5;">{message}</p>
@@ -61,26 +53,38 @@ def send_email_sync(to_email, subject, message):
         <p style="color: #94a3b8; font-size: 12px; margin-bottom: 0;">Secured by Interswitch & Supabase</p>
     </div>
     """
-    msg.attach(MIMEText(html, 'html'))
+
+    payload = {
+        "personalizations": [{"to": [{"email": to_email}]}],
+        "from": {"email": SENDER_EMAIL, "name": "Milestone Escrow"},
+        "subject": subject,
+        "content": [{"type": "text/html", "value": html_content}]
+    }
+
+    headers = {
+        "Authorization": f"Bearer {SENDGRID_API_KEY}",
+        "Content-Type": "application/json"
+    }
 
     try:
-        print(f"📧 Attempting to send email to {to_email}...")
-        server = smtplib.SMTP('smtp.gmail.com', 587, timeout=10)
-        server.set_debuglevel(0)  # Set to 1 for detailed SMTP logs
-        server.starttls()
-        print(f"🔐 Logging into Gmail as {GMAIL_SENDER}...")
-        server.login(GMAIL_SENDER, GMAIL_APP_PASSWORD)
-        print(f"📤 Sending message...")
-        server.send_message(msg)
-        server.quit()
-        print(f"✅ EMAIL SUCCESSFULLY SENT TO: {to_email}")
-        return True, "Email sent successfully"
-    except smtplib.SMTPAuthenticationError as e:
-        error_msg = f"❌ Gmail Authentication Failed: {str(e)} - Check GMAIL_APP_PASSWORD in .env"
-        print(error_msg)
-        return False, error_msg
-    except smtplib.SMTPException as e:
-        error_msg = f"❌ SMTP Error: {str(e)}"
+        print(f"📧 Attempting to send email via SendGrid to {to_email}...")
+        response = requests.post(
+            "https://api.sendgrid.com/v3/mail/send",
+            json=payload,
+            headers=headers,
+            timeout=10
+        )
+
+        if response.status_code == 202:
+            print(f"✅ EMAIL SUCCESSFULLY SENT TO: {to_email}")
+            return True, "Email sent successfully"
+        else:
+            error_msg = f"❌ SendGrid API Error: {response.status_code} - {response.text}"
+            print(error_msg)
+            return False, error_msg
+
+    except requests.exceptions.RequestException as e:
+        error_msg = f"❌ SendGrid Request Failed: {str(e)}"
         print(error_msg)
         return False, error_msg
     except Exception as e:
@@ -335,18 +339,18 @@ def approve_milestone(contract_id):
     
 @app.route('/test-email', methods=['POST'])
 def test_email():
-    """Test endpoint to verify Gmail SMTP is working"""
+    """Test endpoint to verify SendGrid API is working"""
     data = request.get_json() or {}
-    test_recipient = data.get('email', GMAIL_SENDER)  # Send to self if no email provided
+    test_recipient = data.get('email', 'your-email@example.com')
 
     test_message = """
     This is a test email from your Milestone Escrow Platform.<br><br>
     If you're seeing this, your email integration is working correctly! ✅<br><br>
     <b>Configuration:</b><br>
-    - SMTP Server: smtp.gmail.com:587<br>
+    - Email Provider: SendGrid API<br>
     - Sender: {sender}<br>
-    - Method: Synchronous (Production-safe)
-    """.format(sender=GMAIL_SENDER)
+    - Method: HTTPS API (Render/Heroku Compatible)
+    """.format(sender=SENDER_EMAIL)
 
     success, error = send_email_sync(test_recipient, "🧪 Milestone Email Test", test_message)
 
@@ -361,10 +365,11 @@ def test_email():
             "status": "failed",
             "error": error,
             "troubleshooting": [
-                "1. Verify GMAIL_SENDER and GMAIL_APP_PASSWORD in .env",
-                "2. Ensure 2FA is enabled on Gmail account",
-                "3. Generate a new App Password at https://myaccount.google.com/apppasswords",
-                "4. Check if Gmail is blocking sign-in attempts"
+                "1. Sign up at https://signup.sendgrid.com/",
+                "2. Verify your email address",
+                "3. Get API key from Settings → API Keys",
+                "4. Add SENDGRID_API_KEY to .env and Render environment variables",
+                "5. Add SENDER_EMAIL (verified sender domain) to .env"
             ]
         }), 500
 
