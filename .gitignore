@@ -64,3 +64,8 @@ credentials.json
 *.pem
 *.key
 *.crt
+
+# Database files
+*.db
+*.sqlite
+*.sqlite3
