@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone | Freelancer Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .bg-brand-dark { background-color: #0c3875; }
+        .text-brand-dark { color: #0c3875; }
+        .border-brand-dark { border-color: #0c3875; }
+    </style>
+</head>
+<body class="bg-[#F4F7F9] min-h-screen flex items-center justify-center font-sans text-slate-800 p-4">
+
+    <div class="bg-white w-full max-w-[500px] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-slate-100 relative">
+        
+        <div class="flex items-center space-x-3 border-b border-slate-200 pb-4 mb-6">
+            <div class="flex items-center space-x-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 16L9 9L13 14L19 6" stroke="#0c3875" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="20" cy="5" r="2" fill="#0c3875"/>
+                </svg>
+                <span class="text-lg font-bold text-brand-dark tracking-tight">Milestone</span>
+            </div>
+            <div class="h-5 w-px bg-slate-300"></div>
+            <h1 class="text-lg font-semibold text-slate-800">Freelancer Workspace</h1>
+        </div>
+
+        <div class="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200 relative">
+            <div id="statusBadge" class="absolute top-4 right-4 bg-[#D1F4E0] text-[#147D44] text-xs font-bold px-2 py-1 rounded uppercase tracking-wide">
+                Funded
+            </div>
+            <p class="text-sm font-medium text-slate-800 mb-1">Project: <span class="font-normal text-slate-600" id="ui-title">Freelance Services</span></p>
+            <p class="text-sm font-medium text-slate-800 mb-1">Client Escrow: <span class="font-normal text-slate-600" id="ui-funds">₦0.00 (Secured)</span></p>
+            <p class="text-xs text-slate-500 mt-2 flex items-center">
+                <svg class="w-3 h-3 mr-1 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                Funds are locked and guaranteed by Interswitch. Safe to begin work.
+            </p>
+        </div>
+
+        <div class="mb-6 relative">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-sm font-bold text-slate-800">Work completed</span>
+                <span id="progressBadge" class="bg-slate-100 text-slate-500 text-xs font-semibold px-3 py-1 rounded-full transition-colors">Started</span>
+            </div>
+
+            <div class="h-3 w-full bg-slate-200 rounded-full overflow-hidden flex">
+                <div id="progressBar" class="h-full bg-brand-dark w-0 transition-all duration-500"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 mt-2 font-medium">
+                <span>0%</span>
+                <span class="text-center">50%<br>Milestone 1</span>
+                <span>100%</span>
+            </div>
+        </div>
+        <div class="mb-8">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">Your Milestones</h3>
+            
+            <div class="bg-white border border-brand-dark rounded-lg p-4 mb-3 shadow-sm relative overflow-hidden">
+                <div class="absolute left-0 top-0 bottom-0 w-1 bg-brand-dark"></div>
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 class="text-sm font-bold text-brand-dark">Milestone 1</h4>
+                        <p class="text-xs text-slate-600 mt-1" id="ui-m1-desc">Setup and Initial Delivery</p>
+                    </div>
+                    <span class="text-sm font-bold text-slate-800" id="ui-m1-amount">₦0.00</span>
+                </div>
+                <div class="flex justify-between items-center mt-3 pt-3 border-t border-slate-100">
+                    <span id="m1-status-text" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded">In Progress</span>
+                   <button id="openSubmitModalBtn" class="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow-md transition-colors">
+    Submit Milestone 1 for Approval
+</button>
+                </div>
+            </div>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 opacity-75">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <h4 class="text-sm font-bold text-slate-600">Milestone 2</h4>
+                        <p class="text-xs text-slate-500 mt-1" id="ui-m2-desc">Final Revisions</p>
+                    </div>
+                    <span class="text-sm font-bold text-slate-600" id="ui-m2-amount">₦0.00</span>
+                </div>
+                <div class="mt-2 pt-2 border-t border-slate-200">
+                    <span class="text-xs font-medium text-slate-500">Locked until Milestone 1 is approved</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+   <div id="submitModal" class="fixed inset-0 bg-slate-900 bg-opacity-40 flex items-center justify-center z-50 hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white w-full max-w-[450px] rounded-xl shadow-2xl p-6 border border-slate-100 transform scale-100 transition-transform">
+            
+            <div class="flex justify-between items-center border-b border-slate-200 pb-3 mb-5">
+                <h2 class="text-lg font-bold text-slate-800">Submit Milestone 1 for Review</h2>
+                <button id="closeModalBtn" class="text-slate-400 hover:text-slate-600 transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
+            </div>
+            
+            <div class="space-y-5 mb-6">
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Deliverable Link <span class="text-red-500">*</span></label>
+                    <p class="text-xs text-slate-500 mb-2">Paste a link to your Vercel deployment, Google Doc, or GitHub repo.</p>
+                    <input type="url" id="workLink" required class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-sm transition-colors" placeholder="e.g., https://my-project.vercel.app">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-slate-700 mb-1.5">Message to Client <span class="text-slate-400 font-normal">(Optional)</span></label>
+                    <textarea id="workMessage" rows="3" class="w-full px-4 py-3 border border-slate-300 rounded-lg text-sm focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-sm transition-colors resize-none" placeholder="Hey, I finished the design as requested. Please review and let me know if you need any tweaks!"></textarea>
+                </div>
+            </div>
+
+            <button id="confirmSubmitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-lg transition-colors shadow-md text-sm flex justify-center items-center">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
+                Send Work to Client
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contractId = localStorage.getItem('test_contract_id');
+            const totalAmount = localStorage.getItem('test_total_amount') || "150000";
+            const m1Desc = localStorage.getItem('test_m1_desc') || "Setup";
+            const m2Desc = localStorage.getItem('test_m2_desc') || "Delivery";
+            const halfAmount = Math.floor(parseInt(totalAmount) / 2);
+
+            document.getElementById('ui-funds').innerText = `₦${totalAmount}.00 (Secured)`;
+            document.getElementById('ui-m1-desc').innerText = m1Desc;
+            document.getElementById('ui-m2-desc').innerText = m2Desc;
+            document.getElementById('ui-m1-amount').innerText = `₦${halfAmount}.00`;
+            document.getElementById('ui-m2-amount').innerText = `₦${halfAmount}.00`;
+
+            const modal = document.getElementById('submitModal');
+            const openBtn = document.getElementById('openSubmitModalBtn');
+            const closeBtn = document.getElementById('closeModalBtn');
+            const submitBtn = document.getElementById('confirmSubmitBtn');
+
+            // --- STATE MACHINE ---
+            if (localStorage.getItem('m2_paid') === 'true') {
+                updateUIToPaid();
+                setM2PaidUI();
+            } else if (localStorage.getItem('m2_submitted') === 'true') {
+                updateUIToPaid();
+                setM2SubmittedUI();
+            } else if (localStorage.getItem('m1_paid') === 'true') {
+                updateUIToPaid();
+            } else if (localStorage.getItem('m1_submitted') === 'true') {
+                updateUIToSubmitted();
+            }
+
+            // M1 Modal Logic
+            openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+            closeBtn.addEventListener('click', () => modal.classList.add('hidden'));
+            
+            submitBtn.addEventListener('click', async () => {
+                const link = document.getElementById('workLink').value;
+                const message = document.getElementById('workMessage').value;
+                if (!link) return alert("Please provide a link to your work.");
+                
+                submitBtn.innerText = "Submitting..."; submitBtn.disabled = true;
+                try {
+                    const response = await fetch(`/milestone/${contractId}/submit`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ link: link, message: message, milestone_num: 1 })
+                    });
+                    if (response.ok) {
+                        localStorage.setItem('m1_submitted', 'true');
+                        modal.classList.add('hidden');
+                        updateUIToSubmitted();
+                    }
+                } catch (err) { alert("Network error."); submitBtn.disabled = false; submitBtn.innerText = "Send Work to Client"; }
+            });
+
+            // UI UPDATERS
+            function updateUIToSubmitted() {
+                document.getElementById('m1-status-text').innerText = 'Under Review';
+                document.getElementById('m1-status-text').className = 'text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200';
+                openBtn.innerText = "Awaiting Client Approval";
+                openBtn.className = 'text-sm font-bold text-slate-400 bg-slate-200 px-4 py-2 rounded-lg cursor-not-allowed';
+                openBtn.disabled = true;
+                if(document.getElementById('progressBar')) document.getElementById('progressBar').style.width = '50%';
+                if(document.getElementById('progressBadge')) {
+                    document.getElementById('progressBadge').innerText = 'In Review';
+                    document.getElementById('progressBadge').className = 'bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full';
+                }
+            }
+
+            function updateUIToPaid() {
+                document.getElementById('m1-status-text').innerText = 'Paid via Interswitch';
+                document.getElementById('m1-status-text').className = 'text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded border border-emerald-200';
+                openBtn.innerText = "Payment Received";
+                openBtn.className = 'text-sm font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg cursor-not-allowed border border-emerald-200';
+                openBtn.disabled = true;
+                if(document.getElementById('progressBar')) document.getElementById('progressBar').style.width = '50%';
+                if(document.getElementById('progressBadge')) {
+                    document.getElementById('progressBadge').innerText = 'Milestone 1 Paid';
+                    document.getElementById('progressBadge').className = 'bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full';
+                }
+
+                // UNLOCK MILESTONE 2
+                const m2Container = document.getElementById('ui-m2-desc').closest('.bg-slate-50');
+                if (m2Container) {
+                    m2Container.classList.remove('bg-slate-50', 'opacity-75', 'border-slate-200');
+                    m2Container.classList.add('bg-white', 'border-brand-dark', 'shadow-sm', 'relative', 'overflow-hidden');
+                    if(!m2Container.querySelector('.absolute')) {
+                        const stripe = document.createElement('div');
+                        stripe.className = 'absolute left-0 top-0 bottom-0 w-1 bg-brand-dark';
+                        m2Container.prepend(stripe);
+                    }
+                    m2Container.querySelector('.border-t').innerHTML = `
+                        <div class="flex justify-between items-center w-full">
+                            <span id="m2-status-text" class="text-xs font-semibold text-slate-500 bg-slate-100 px-2 py-1 rounded">In Progress</span>
+                            <button id="submitM2Btn" class="text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg shadow-md transition-colors">
+                                Submit Final Work
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Add M2 click logic
+                    document.getElementById('submitM2Btn').addEventListener('click', async (e) => {
+                        e.target.innerText = "Submitting Final Work...";
+                        e.target.disabled = true;
+                        try {
+                            const response = await fetch(`/milestone/${contractId}/submit`, { 
+                                method: 'POST', 
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ link: "Final Delivery", message: "The final milestone is completed!", milestone_num: 2 })
+                            });
+                            if (response.ok) {
+                                localStorage.setItem('m2_submitted', 'true');
+                                window.location.reload(); 
+                            }
+                        } catch(err) { alert("Network Error"); e.target.disabled = false; }
+                    });
+                }
+            }
+
+            function setM2SubmittedUI() {
+                const btn = document.getElementById('submitM2Btn');
+                if(btn) {
+                    btn.innerText = "Awaiting Final Approval";
+                    btn.className = 'text-sm font-bold text-slate-400 bg-slate-200 px-4 py-2 rounded-lg cursor-not-allowed';
+                    btn.disabled = true;
+                }
+                const status = document.getElementById('m2-status-text');
+                if(status) {
+                    status.innerText = 'Under Review';
+                    status.className = 'text-xs font-semibold text-amber-600 bg-amber-50 px-2 py-1 rounded border border-amber-200';
+                }
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressBadge').innerText = 'Final Review';
+                document.getElementById('progressBadge').className = 'bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full';
+            }
+
+            function setM2PaidUI() {
+                setM2SubmittedUI();
+                const btn = document.getElementById('submitM2Btn');
+                if(btn) {
+                    btn.innerText = "Final Payment Received";
+                    btn.className = 'text-sm font-bold text-emerald-700 bg-emerald-50 px-4 py-2 rounded-lg cursor-not-allowed border border-emerald-200';
+                }
+                const status = document.getElementById('m2-status-text');
+                if(status) {
+                    status.innerText = 'Paid via Interswitch';
+                    status.className = 'text-xs font-bold text-emerald-700 bg-emerald-100 px-2 py-1 rounded border border-emerald-200';
+                }
+                document.getElementById('progressBadge').innerText = 'Contract Completed';
+                document.getElementById('progressBadge').className = 'bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full';
+                document.getElementById('ui-funds').innerText = `₦0.00 (All Funds Released)`;
+            }
+        });
+
+        // Listen for changes from the Buyer tab and auto-refresh!
+        window.addEventListener('storage', function(e) {
+            if (e.key === 'is_funded' || e.key === 'm1_paid' || e.key === 'm2_paid') {
+                console.log("Buyer updated state. Reloading Seller dashboard...");
+                window.location.reload();
+            }
+        });
+    </script>
+</body>
+</html>
