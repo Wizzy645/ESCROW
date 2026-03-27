@@ -6,7 +6,7 @@
 
 ## 🎨 Figma Design
 **https://www.figma.com/design/pPGIdJqzYU721o34s14xRA/Milestone-Project?node-id=0-1&p=f&t=yC51yFRCeknu2Rcy-0**
-*Our complete UI/UX design process, wireframes, and high-fidelity interactive prototypes.*
+*Our complete UI/UX design process, wireframes, and high-fidelity interactive Designs.*
 
 ## Project Overview
 Milestone is an automated micro-escrow platform designed to solve the biggest problem in the African freelance economy: Trust. Freelancers fear working without upfront payment, and clients fear paying upfront for incomplete work. Milestone solves this by securing client funds upfront via Interswitch, and automatically releasing payouts to the freelancer via the Quickteller Transfer API once milestones are approved. 
@@ -71,11 +71,13 @@ We have included a `SECURITY.md` file in this repository detailing our future ro
 ## ⚙️ Local Setup Instructions
 If judges wish to run this application locally to test the threaded email engine:
 
-1. Clone the repository: 
-   `git clone https://github.com/[YOUR_GITHUB_USERNAME]/[YOUR_REPO_NAME].git`
-2. Navigate into the directory: 
-   `cd [YOUR_REPO_NAME]`
-3. Install the required Python dependencies: 
+1. Clone the repository:  
+   `git clone https://github.com/Wizzy645/ESCROW.git`
+
+2. Navigate into the directory:  
+   `cd ESCROW`
+
+3. Install the required Python dependencies:  
    `pip install -r requirements.txt`
 4. Create a `.env` file in the root directory with the following variables (keys have been revoked/hidden for security):
    ```env
