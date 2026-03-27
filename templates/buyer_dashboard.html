@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Milestone | Project Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://webpay-ui.k8.isw.la/inline-checkout.js"></script>
+    <style>
+        .bg-brand-dark { background-color: #0c3875; }
+        .text-brand-dark { color: #0c3875; }
+        .border-brand-dark { border-color: #0c3875; }
+    </style>
+</head>
+<body class="bg-[#F4F7F9] min-h-screen flex items-center justify-center font-sans text-slate-800 p-4">
+
+    <div class="bg-white w-full max-w-[500px] rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 border border-slate-100 relative">
+        <div class="flex items-center space-x-3 border-b border-slate-200 pb-4 mb-6">
+            <div class="flex items-center space-x-1">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M4 16L9 9L13 14L19 6" stroke="#0c3875" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                    <circle cx="20" cy="5" r="2" fill="#0c3875"/>
+                </svg>
+                <span class="text-lg font-bold text-brand-dark tracking-tight">Milestone</span>
+            </div>
+            <div class="h-5 w-px bg-slate-300"></div>
+            <h1 class="text-lg font-semibold text-slate-800">Project Dashboard</h1>
+        </div>
+
+        <div class="bg-slate-50 rounded-lg p-4 mb-6 border border-slate-200 relative">
+            <div id="statusBadge" class="absolute top-4 right-4 bg-slate-200 text-slate-600 text-xs font-bold px-2 py-1 rounded uppercase tracking-wide transition-colors">
+                Pending
+            </div>
+            <p class="text-sm font-medium text-slate-800 mb-1">Project: <span class="font-normal text-slate-600" id="ui-title">Freelance Services</span></p>
+            <p class="text-sm font-medium text-slate-800 mb-1">Seller: <span class="font-normal text-slate-600" id="ui-seller">[loading...]</span></p>
+            <p class="text-sm font-medium text-slate-800">Funds Locked: <span class="font-normal text-slate-600" id="ui-funds">₦0.00</span></p>
+        </div>
+
+        <div class="mb-6 relative">
+            <div class="flex justify-between items-end mb-2">
+                <span class="text-sm font-bold text-slate-800">Work completed</span>
+                <span id="progressBadge" class="bg-slate-100 text-slate-500 text-xs font-semibold px-3 py-1 rounded-full transition-colors">Awaiting Funds</span>
+            </div>
+            <div class="h-3 w-full bg-slate-200 rounded-full overflow-hidden flex">
+                <div id="progressBar" class="h-full bg-brand-dark w-0 transition-all duration-500"></div>
+            </div>
+            <div class="flex justify-between text-xs text-slate-500 mt-2 font-medium">
+                <span>0%</span>
+                <span class="text-center">50%<br>Milestone 1</span>
+                <span>100%</span>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h3 class="text-sm font-bold text-slate-800 mb-3">Milestones</h3>
+            <div class="flex justify-between text-sm mb-2">
+                <span class="text-slate-700">Milestone 1: <span id="ui-m1-desc">Setup</span></span>
+                <span class="text-slate-500" id="ui-m1-status">50% (Locked)</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-slate-700">Milestone 2: <span id="ui-m2-desc">Delivery</span></span>
+                <span class="text-slate-500" id="ui-m2-status">50% (Locked)</span>
+            </div>
+        </div>
+
+        <div class="flex space-x-3">
+            <button id="mainActionBtn" disabled class="flex-1 bg-slate-300 text-slate-500 font-semibold py-3 rounded-lg transition-colors shadow-sm text-sm cursor-not-allowed">
+                Approve & Payout Milestone 1
+            </button>
+        </div>
+    </div>
+
+    <div id="fundingModal" class="fixed inset-0 bg-slate-900 bg-opacity-50 flex items-center justify-center z-50 hidden backdrop-blur-sm transition-opacity">
+        <div class="bg-white w-full max-w-[400px] rounded-xl shadow-2xl p-6 border border-slate-100 transform scale-100 transition-transform">
+            <div class="flex items-center space-x-3 border-b border-slate-200 pb-3 mb-5">
+                <span class="text-lg font-bold text-brand-dark tracking-tight">Milestone</span>
+                <div class="h-4 w-px bg-slate-300"></div>
+                <h2 class="text-md font-semibold text-slate-800">Fund Escrow Wallet</h2>
+            </div>
+            
+            <div class="bg-slate-50 rounded p-4 mb-4 border border-slate-200 text-sm">
+                <p class="text-slate-800 mb-1"><span class="font-semibold text-slate-600">Project Summary:</span> <span id="modal-title">Freelance Services</span></p>
+                <p class="text-slate-800 mb-1"><span class="font-semibold text-slate-600">Seller:</span> <span id="modal-seller">loading...</span></p>
+                <p class="text-slate-800 font-bold"><span class="font-semibold text-slate-600">Total Amount to Lock:</span> <span class="text-brand-dark">₦<span id="modal-amount">0.00</span></span></p>
+            </div>
+
+            <button id="confirmFundBtn" class="w-full bg-brand-dark hover:bg-[#082a5a] text-white font-semibold py-3 rounded-lg transition-colors shadow-sm text-sm">
+                Initialize Secure Interswitch Transfer
+            </button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const contractId = localStorage.getItem('test_contract_id');
+            const totalAmount = localStorage.getItem('test_total_amount') || "1500";
+            const sellerEmail = localStorage.getItem('test_seller_email') || "seller@email.com";
+            const m1Desc = localStorage.getItem('test_m1_desc') || "Setup";
+            const m2Desc = localStorage.getItem('test_m2_desc') || "Delivery";
+            const halfAmount = Math.floor(parseInt(totalAmount) / 2);
+            
+            document.getElementById('ui-seller').innerText = sellerEmail;
+            document.getElementById('modal-seller').innerText = sellerEmail;
+            document.getElementById('modal-amount').innerText = totalAmount;
+            document.getElementById('ui-m1-desc').innerText = m1Desc;
+            document.getElementById('ui-m2-desc').innerText = m2Desc;
+
+            const mainActionBtn = document.getElementById('mainActionBtn');
+            mainActionBtn.innerText = `Approve & Payout Milestone 1 (₦${halfAmount})`;
+
+            // STAGE 1: FUNDING
+            const fundingModal = document.getElementById('fundingModal');
+            if (contractId && !localStorage.getItem('is_funded')) {
+                fundingModal.classList.remove('hidden');
+            } else if (localStorage.getItem('is_funded') === 'true' && localStorage.getItem('m1_submitted') !== 'true') {
+                setFundedUI();
+            }
+
+            // --- REAL INTERSWITCH INLINE CHECKOUT ---
+            document.getElementById('confirmFundBtn').addEventListener('click', () => {
+                const fundBtn = document.getElementById('confirmFundBtn');
+                fundBtn.innerText = "Opening Interswitch Gateway...";
+                fundBtn.disabled = true;
+
+                const txnRef = "MIL_" + Math.floor((Math.random() * 1000000000) + 1);
+                const amountInMinor = parseInt(totalAmount) * 100;
+
+                const paymentParams = {
+                    merchant_code: "MX6072",    
+                    pay_item_id: "9405967",     
+                    txn_ref: txnRef,
+                    amount: amountInMinor,
+                    currency: 566,              
+                    cust_email: sellerEmail,    
+                    site_redirect_url: "https://example.com", 
+                    mode: 'TEST',               
+                    
+                    onComplete: async function(response) {
+                        if (response && (response.resp === "00" || response.desc === "Approved by Financial Institution")) {
+                            try {
+                                const backendResponse = await fetch(`/contract/${contractId}/fund`, { method: 'POST' });
+                                if (backendResponse.ok) {
+                                    localStorage.setItem('is_funded', 'true');
+                                    fundingModal.classList.add('hidden');
+                                    setFundedUI();
+                                    alert("✅ Funds successfully secured in Escrow!");
+                                }
+                            } catch (err) {
+                                alert("Network error saving to Escrow database.");
+                            }
+                        } else {
+                            const forceSuccess = confirm("Payment gateway closed or failed. (ISW Sandbox Error). Force success for demo purposes?");
+                            if(forceSuccess) {
+                                fetch(`/contract/${contractId}/fund`, { method: 'POST' }).then(() => {
+                                    localStorage.setItem('is_funded', 'true');
+                                    window.location.reload();
+                                });
+                            } else {
+                                fundBtn.innerText = "Initialize Secure Interswitch Transfer";
+                                fundBtn.disabled = false;
+                            }
+                        }
+                    }
+                };
+
+                try {
+                    window.webpayCheckout(paymentParams);
+                } catch (error) {
+                    console.error("Interswitch Error:", error);
+                    alert("Failed to load Gateway.");
+                    fundBtn.disabled = false;
+                }
+            });
+
+            function setFundedUI() {
+                document.getElementById('statusBadge').innerText = 'Active';
+                document.getElementById('statusBadge').className = 'absolute top-4 right-4 bg-[#D1F4E0] text-[#147D44] text-xs font-bold px-2 py-1 rounded uppercase tracking-wide transition-colors';
+                document.getElementById('ui-funds').innerText = `₦${totalAmount}.00 (Secured via Interswitch)`;
+                document.getElementById('progressBadge').innerText = 'Awaiting Work';
+                document.getElementById('progressBadge').className = 'bg-blue-100 text-brand-dark text-xs font-semibold px-3 py-1 rounded-full';
+                document.getElementById('ui-m1-status').innerText = '50% (Active)';
+            }
+
+            // --- STATE LOGIC ---
+            
+            // M1 Submitted
+            if (localStorage.getItem('m1_submitted') === 'true' && localStorage.getItem('m1_paid') !== 'true') {
+                setFundedUI();
+                document.getElementById('progressBar').style.width = '50%';
+                document.getElementById('progressBadge').innerText = 'Review Required';
+                document.getElementById('progressBadge').className = 'bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full';
+                document.getElementById('ui-m1-status').innerText = '50% (Awaiting Approval)';
+                document.getElementById('ui-m1-status').className = 'text-amber-600 font-bold text-sm';
+                
+                mainActionBtn.disabled = false;
+                mainActionBtn.className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm transition-colors';
+                
+                mainActionBtn.onclick = async () => {
+                    mainActionBtn.innerText = "Processing Payout via Interswitch..."; mainActionBtn.disabled = true;
+                    try {
+                        const response = await fetch(`/milestone/${contractId}/approve`, { method: 'POST' });
+                        if (response.ok) {
+                            localStorage.setItem('m1_paid', 'true');
+                            window.location.reload();
+                        } else {
+                            alert("Backend error during payout.");
+                            mainActionBtn.innerText = `Approve & Payout Milestone 1 (₦${halfAmount})`;
+                            mainActionBtn.disabled = false;
+                        }
+                    } catch (err) { alert("Network error."); mainActionBtn.disabled = false; }
+                };
+            }
+
+            // Fully Paid M1
+            if (localStorage.getItem('m1_paid') === 'true' && localStorage.getItem('m2_submitted') !== 'true') {
+                setFundedUI();
+                document.getElementById('progressBar').style.width = '50%';
+                document.getElementById('progressBadge').innerText = 'Milestone 1 Paid';
+                document.getElementById('progressBadge').className = 'bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full';
+                document.getElementById('ui-m1-status').innerText = `Paid (₦${halfAmount}.00)`;
+                document.getElementById('ui-m1-status').className = 'text-emerald-600 font-bold text-sm';
+                
+                mainActionBtn.innerText = "Awaiting Milestone 2 Work...";
+                mainActionBtn.className = 'flex-1 bg-slate-100 text-slate-400 font-bold py-3 rounded-lg text-sm cursor-not-allowed';
+                mainActionBtn.disabled = true;
+            }
+
+            // M2 Submitted (Buyer Needs to Approve)
+            if (localStorage.getItem('m2_submitted') === 'true' && localStorage.getItem('m2_paid') !== 'true') {
+                setFundedUI();
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressBadge').innerText = 'Final Review';
+                document.getElementById('progressBadge').className = 'bg-amber-100 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full';
+                
+                // Keep M1 showing as paid
+                document.getElementById('ui-m1-status').innerText = `Paid (₦${halfAmount}.00)`;
+                document.getElementById('ui-m1-status').className = 'text-emerald-600 font-bold text-sm';
+                
+                // Show M2 as awaiting approval
+                document.getElementById('ui-m2-status').innerText = '50% (Awaiting Approval)';
+                document.getElementById('ui-m2-status').className = 'text-amber-600 font-bold text-sm';
+                
+                // WAKE UP THE BUTTON FOR M2
+                mainActionBtn.disabled = false;
+                mainActionBtn.innerText = `Approve & Payout Milestone 2 (₦${halfAmount})`;
+                mainActionBtn.className = 'flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow-md text-sm transition-colors';
+                
+                mainActionBtn.onclick = async () => {
+                    mainActionBtn.innerText = "Processing Final Payout..."; 
+                    mainActionBtn.disabled = true;
+                    try {
+                        // Assuming you want to use the same approve route, but it triggers the M2 logic
+                        const response = await fetch(`/milestone/${contractId}/approve`, { method: 'POST' });
+                        if (response.ok) {
+                            localStorage.setItem('m2_paid', 'true');
+                            window.location.reload();
+                        } else {
+                            alert("Backend error during payout.");
+                            mainActionBtn.innerText = `Approve & Payout Milestone 2 (₦${halfAmount})`;
+                            mainActionBtn.disabled = false;
+                        }
+                    } catch (err) { alert("Network error."); mainActionBtn.disabled = false; }
+                };
+            }
+
+            // Fully Paid M2 (Contract Complete)
+            if (localStorage.getItem('m2_paid') === 'true') {
+                setFundedUI();
+                document.getElementById('progressBar').style.width = '100%';
+                document.getElementById('progressBadge').innerText = 'Contract Completed';
+                document.getElementById('progressBadge').className = 'bg-emerald-100 text-emerald-800 text-xs font-semibold px-3 py-1 rounded-full';
+                
+                document.getElementById('ui-m1-status').innerText = `Paid (₦${halfAmount}.00)`;
+                document.getElementById('ui-m1-status').className = 'text-emerald-600 font-bold text-sm';
+                document.getElementById('ui-m2-status').innerText = `Paid (₦${halfAmount}.00)`;
+                document.getElementById('ui-m2-status').className = 'text-emerald-600 font-bold text-sm';
+                
+                document.getElementById('statusBadge').innerText = 'Completed';
+                document.getElementById('ui-funds').innerText = `₦0.00 (All Funds Released)`;
+                
+                mainActionBtn.innerText = "All Milestones Approved & Paid";
+                mainActionBtn.className = 'flex-1 bg-emerald-100 text-emerald-800 font-bold py-3 rounded-lg text-sm cursor-not-allowed';
+                mainActionBtn.disabled = true;
+            }
+        });
+
+        // Listen for changes from the Seller tab and auto-refresh!
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'm1_submitted' || e.key === 'm2_submitted') {
+                    console.log("Seller updated state. Reloading Buyer dashboard...");
+                    window.location.reload();
+                }
+            });
+    </script>
+</body>
+</html>
